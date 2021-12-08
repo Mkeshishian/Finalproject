@@ -1,7 +1,8 @@
-
 #define LSH_RL_BUFSIZE 1024
-
-
+/**
+   @brief Read a line of input from stdin.
+   @return The line from stdin.
+ */
 char *lsh_read_line(void)
 {
   int bufsize = LSH_RL_BUFSIZE;
@@ -38,6 +39,48 @@ char *lsh_read_line(void)
     }
   }
 }
+
+#define LSH_TOK_BUFSIZE 64
+#define LSH_TOK_DELIM " \t\r\n\a"
+/**
+   @brief Split a line into tokens (very naively).
+   @param line The line.
+   @return Null-terminated array of tokens.
+ */
+char **lsh_split_line(char *line)
+{
+  int bufsize = LSH_TOK_BUFSIZE, position = 0;
+  char **tokens = malloc(bufsize * sizeof(char*));
+  char *token;
+
+  if (!tokens) {
+    fprintf(stderr, "lsh: allocation error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  token = strtok(line, LSH_TOK_DELIM);
+  while (token != NULL) {
+    tokens[position] = token;
+    position++;
+
+    if (position >= bufsize) {
+      bufsize += LSH_TOK_BUFSIZE;
+      tokens = realloc(tokens, bufsize * sizeof(char*));
+      if (!tokens) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    token = strtok(NULL, LSH_TOK_DELIM);
+  }
+  tokens[position] = NULL;
+  return tokens;
+}
+
+/**
+   @brief Loop getting input and executing it.
+ */
 void lsh_loop(void)
 {
   char *line;
@@ -55,7 +98,12 @@ void lsh_loop(void)
   } while (status);
 }
 
-
+/**
+   @brief Main entry point.
+   @param argc Argument count.
+   @param argv Argument vector.
+   @return status code
+ */
 int main(int argc, char **argv)
 {
   // Load config files, if any.
